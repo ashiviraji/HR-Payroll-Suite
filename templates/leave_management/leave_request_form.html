@@ -1,0 +1,108 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Apply for Leave | HR Payroll System{% endblock %}
+
+{% block content %}
+
+<div class="row justify-content-center">
+
+    <div class="col-md-8 col-lg-6">
+
+        <!-- Page Heading -->
+        <div class="mb-4">
+            <h2 class="fw-bold">Apply for Leave</h2>
+            <p class="text-muted">
+                Submit a new leave request for approval.
+            </p>
+        </div>
+
+        <!-- Leave Application Form -->
+        <div class="card border-0 shadow-sm">
+
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0">Leave Request Details</h5>
+            </div>
+
+            <div class="card-body p-4">
+
+                <form method="POST">
+
+                    {% csrf_token %}
+
+                    <!-- Form Errors -->
+                    {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                    {% endif %}
+
+                    <!-- Leave Type -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Leave Type
+                        </label>
+
+                        {{ form.leave_type }}
+
+                        {% for error in form.leave_type.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Start Date -->
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">
+                            Start Date
+                        </label>
+
+                        {{ form.start_date }}
+
+                        {% for error in form.start_date.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- End Date -->
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            End Date
+                        </label>
+
+                        {{ form.end_date }}
+
+                        {% for error in form.end_date.errors %}
+                        <div class="text-danger small mt-1">
+                            {{ error }}
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Buttons -->
+                    <div class="d-flex justify-content-end gap-2">
+
+                        <a href="{% url 'leave_request_list' %}"
+                           class="btn btn-outline-secondary">
+                            Cancel
+                        </a>
+
+                        <button type="submit"
+                                class="btn btn-primary">
+                            Submit Leave Request
+                        </button>
+
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

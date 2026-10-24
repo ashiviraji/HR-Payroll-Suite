@@ -1,0 +1,415 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard | HR Payroll System{% endblock %}
+{% block content %}
+<style>
+/* HR Officer Portal — teal / deep blue palette */
+.hr-portal {
+  --hr-teal: #146a6c;
+  --hr-deep: #174f65;
+  --hr-accent: #198c83;
+  --hr-soft: #e9f5f3;
+}
+.hr-portal .card {
+  border-radius: 14px;
+  overflow: hidden;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+.hr-portal .card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(20, 106, 108, .12) !important;
+}
+.hr-portal .card-header { color: var(--hr-deep); }
+.hr-portal h4 { color: var(--hr-deep); font-weight: 650; }
+.hr-portal .text-primary,
+.hr-portal .text-info,
+.hr-portal .text-success { color: var(--hr-teal) !important; }
+.hr-portal .btn-primary {
+  background: var(--hr-teal);
+  border-color: var(--hr-teal);
+}
+.hr-portal .btn-primary:hover,
+.hr-portal .btn-primary:focus {
+  background: var(--hr-deep);
+  border-color: var(--hr-deep);
+}
+.hr-portal .btn-outline-primary {
+  color: var(--hr-teal);
+  border-color: var(--hr-teal);
+}
+.hr-portal .btn-outline-primary:hover,
+.hr-portal .btn-outline-primary:focus {
+  color: #fff;
+  background: var(--hr-teal);
+  border-color: var(--hr-teal);
+}
+.hr-portal .table-light { --bs-table-bg: var(--hr-soft); }
+.hr-portal .badge.bg-success { background-color: var(--hr-accent) !important; }
+.hr-portal .hr-hero-badge { color: var(--hr-teal) !important; }
+.hr-portal a:not(.btn) { color: var(--hr-teal); }
+</style>
+
+{% if can_view_employee_stats %}
+{% if employee_profile %}
+<div class="rounded-4 p-4 p-md-5 mb-4 text-white shadow-sm" style="background:linear-gradient(110deg,#0d6efd,#253a83)">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <div class="small text-white-50 text-uppercase mb-2">Employee Portal</div>
+      <h2 class="fw-bold mb-2">Hello, {{ employee_profile.first_name }} {{ employee_profile.last_name }}! 👋</h2>
+      <p class="mb-0 text-white-50">Here's your personal employment overview.</p>
+    </div>
+    <span class="badge bg-white text-primary fs-6 px-3 py-2">{{ employee_profile.get_employment_status_display }}</span>
+  </div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-calendar-check me-2"></i>Available Annual Leave</div><h3 class="fw-bold text-primary">{% if annual_leave_hours is not None %}{{ annual_leave_hours|floatformat:2 }} hrs{% else %}Not Available{% endif %}</h3><small class="text-muted">Remaining leave balance</small></div></div></div>
+  <div class="col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-wallet2 me-2"></i>Latest Net Salary</div><h3 class="fw-bold text-success">{% if latest_payslip %}AUD {{ latest_payslip.net_pay|floatformat:2 }}{% else %}Not Available{% endif %}</h3><small class="text-muted">{% if latest_payslip %}{{ latest_payslip.run.period }}{% else %}No completed payslip{% endif %}</small></div></div></div>
+  <div class="col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-star me-2"></i>Latest Performance</div><h3 class="fw-bold text-warning">{% if latest_review %}{{ latest_review.rating }} / 5{% else %}Not Available{% endif %}</h3><small class="text-muted">{% if latest_review %}{{ latest_review.review_date|date:'d M Y' }}{% else %}No performance review{% endif %}</small></div></div></div>
+  <div class="col-md-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-hourglass-split me-2"></i>Pending Leave Requests</div><h3 class="fw-bold text-info">{{ pending_own_leaves }}</h3><small class="text-muted">{{ approved_own_leaves }} approved · {{ rejected_own_leaves }} rejected</small></div></div></div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-lg-5"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white py-3"><h5 class="mb-0">My Profile</h5></div><div class="card-body">
+    <dl class="row mb-0"><dt class="col-5 text-muted">Employee ID</dt><dd class="col-7">#{{ employee_profile.employee_id }}</dd><dt class="col-5 text-muted">Department</dt><dd class="col-7">{{ employee_profile.department.name }}</dd><dt class="col-5 text-muted">Email</dt><dd class="col-7 text-break">{{ employee_profile.email }}</dd><dt class="col-5 text-muted">Joined</dt><dd class="col-7">{{ employee_profile.hire_date|date:'d M Y' }}</dd><dt class="col-5 text-muted">Manager</dt><dd class="col-7">{{ employee_profile.manager|default:'Not Assigned' }}</dd></dl>
+    <div class="d-flex flex-wrap gap-2 mt-4 pt-3 border-top">
+      <a href="{% url 'employee_profile_edit' %}" class="btn btn-primary">
+        <i class="bi bi-pencil-square me-1"></i>Edit Profile
+      </a>
+      <a href="{% url 'employee_change_password' %}" class="btn btn-outline-primary">
+        <i class="bi bi-key me-1"></i>Change Password
+      </a>
+    </div>
+  </div></div></div>
+  <div class="col-lg-7"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white py-3"><h5 class="mb-0">Salary Earnings History</h5></div><div class="card-body"><canvas id="earningsChart" height="160" aria-label="Monthly net salary history" role="img"></canvas><div id="earningsFallback" class="text-muted small d-none">No completed payslips available.</div></div></div></div>
+</div>
+<div class="row g-4 mb-4">
+  <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white py-3"><h5 class="mb-0">Latest Payslip</h5></div><div class="card-body">
+    {% if latest_payslip %}<div class="d-flex justify-content-between mb-2"><span>Payroll Period</span><strong>{{ latest_payslip.run.period }}</strong></div><div class="d-flex justify-content-between mb-2"><span>Gross Pay</span><strong>AUD {{ latest_payslip.gross_pay|floatformat:2 }}</strong></div><div class="d-flex justify-content-between mb-2"><span>Tax</span><strong>AUD {{ latest_payslip.tax_amount|floatformat:2 }}</strong></div><div class="d-flex justify-content-between mb-2"><span>Total Deductions</span><strong>AUD {{ latest_payslip.total_deductions|floatformat:2 }}</strong></div><hr><div class="d-flex justify-content-between"><strong>Net Pay</strong><strong class="text-success">AUD {{ latest_payslip.net_pay|floatformat:2 }}</strong></div>{% else %}<p class="text-muted mb-0">No completed payslip available.</p>{% endif %}
+  </div></div></div>
+  <div class="col-lg-6"><div class="card border-0 shadow-sm h-100"><div class="card-header bg-white py-3"><h5 class="mb-0">Performance Review</h5></div><div class="card-body">
+    {% if latest_review %}<h3 class="fw-bold text-warning">{{ latest_review.rating }} / 5</h3><p class="text-muted mb-2">{{ latest_review.cycle.name }} · {{ latest_review.review_date|date:'d M Y' }}</p><p><strong>Reviewed by:</strong> {{ latest_review.reviewer }}</p><p class="mb-0">{{ latest_review.comments|default:'No comments recorded.' }}</p>{% else %}<p class="text-muted mb-0">No performance review available.</p>{% endif %}
+  </div></div></div>
+</div>
+<h4 class="mb-3">Quick Actions</h4>
+<div class="row g-3 mb-4"><div class="col-md-4"><a href="{% url 'leave_request_create' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-calendar-plus me-2"></i>Apply for Leave</a></div><div class="col-md-4"><a href="{% url 'leave_request_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-list-check me-2"></i>My Leave Requests</a></div><div class="col-md-4"><a href="{% url 'performance_review_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-graph-up me-2"></i>My Performance</a></div></div>
+{{ salary_chart_labels|json_script:'salary-chart-labels' }}
+{{ salary_chart_values|json_script:'salary-chart-values' }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const labels = JSON.parse(document.getElementById('salary-chart-labels').textContent);
+  const values = JSON.parse(document.getElementById('salary-chart-values').textContent);
+  const canvas = document.getElementById('earningsChart');
+  if (!labels.length) { canvas.classList.add('d-none'); document.getElementById('earningsFallback').classList.remove('d-none'); return; }
+  if (!window.Chart) { canvas.insertAdjacentHTML('afterend', '<p class="text-muted">Chart unavailable. Please check your internet connection.</p>'); return; }
+  new Chart(canvas, {type:'bar',data:{labels:labels,datasets:[{label:'Net Pay (AUD)',data:values,backgroundColor:'#0d6efd',borderRadius:6}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true}}}});
+});
+</script>
+{% else %}<div class="alert alert-warning">Your account is not linked to an employee profile. Please contact HR.</div>{% endif %}
+{% elif can_view_manager_stats %}
+
+<!-- ===================================================== -->
+<!-- LINE MANAGER DASHBOARD -->
+<!-- ===================================================== -->
+{% if manager_profile %}
+<div class="rounded-4 p-4 p-md-5 mb-4 text-white shadow-sm"
+     style="background:linear-gradient(110deg,#1456b8,#263a80)">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <div class="small text-white-50 text-uppercase mb-2">Line Manager Portal</div>
+            <h2 class="fw-bold mb-2">Hello, {{ manager_profile.first_name }}! 👋</h2>
+            <p class="mb-0 text-white-50">Here's your team overview and pending actions.</p>
+        </div>
+        <span class="badge bg-white text-primary fs-6 px-3 py-2">{{ manager_profile.department.name }}</span>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <div class="text-muted small mb-2"><i class="bi bi-people me-2"></i>Team Members</div>
+            <h2 class="fw-bold text-primary mb-1">{{ team_members }}</h2>
+            <small class="text-muted">Direct reports</small>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <div class="text-muted small mb-2"><i class="bi bi-calendar-event me-2"></i>Pending Leave Approvals</div>
+            <h2 class="fw-bold text-warning mb-1">{{ pending_team_leaves }}</h2>
+            <small class="text-muted">Requests awaiting your review</small>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <div class="text-muted small mb-2"><i class="bi bi-star me-2"></i>Team Average Rating</div>
+            <h2 class="fw-bold text-success mb-1">
+                {% if team_average_rating is not None %}{{ team_average_rating|floatformat:1 }} / 5{% else %}—{% endif %}
+            </h2>
+            <small class="text-muted">Across recorded reviews</small>
+        </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100"><div class="card-body p-4">
+            <div class="text-muted small mb-2"><i class="bi bi-clipboard-check me-2"></i>Performance Reviews</div>
+            <h2 class="fw-bold text-info mb-1">{{ team_review_count }}</h2>
+            <small class="text-muted">Reviews recorded for your team</small>
+        </div></div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-xl-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
+                <h5 class="mb-0 fw-semibold">Leave Requests Awaiting Approval</h5>
+                <a href="{% url 'leave_request_list' %}" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                {% if pending_team_leave_list %}
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr><th>Employee</th><th>Leave Type</th><th>Dates</th><th>Action</th></tr>
+                        </thead>
+                        <tbody>
+                            {% for leave in pending_team_leave_list %}
+                            <tr>
+                                <td>{{ leave.employee.first_name }} {{ leave.employee.last_name }}</td>
+                                <td>{{ leave.leave_type.name }}</td>
+                                <td class="small">{{ leave.start_date|date:'d M Y' }} – {{ leave.end_date|date:'d M Y' }}</td>
+                                <td><a href="{% url 'leave_request_list' %}" class="btn btn-sm btn-outline-primary">Review</a></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-4 text-muted">
+                    <i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>
+                    No pending team leave requests.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3"><h5 class="mb-0 fw-semibold">Recent Team Performance</h5></div>
+            <div class="card-body">
+                {% for review in recent_team_reviews %}
+                <div class="d-flex justify-content-between gap-3 align-items-start {% if not forloop.last %}border-bottom pb-3 mb-3{% endif %}">
+                    <div>
+                        <div class="fw-semibold">{{ review.employee.first_name }} {{ review.employee.last_name }}</div>
+                        <small class="text-muted">{{ review.cycle.name }} · {{ review.review_date|date:'d M Y' }}</small>
+                    </div>
+                    <span class="badge bg-warning text-dark">{{ review.rating }} / 5</span>
+                </div>
+                {% empty %}
+                <div class="text-center text-muted py-4">No team performance reviews recorded yet.</div>
+                {% endfor %}
+            </div>
+            <div class="card-footer bg-white border-0 pb-3">
+                <a href="{% url 'performance_review_list' %}" class="btn btn-outline-primary btn-sm">View Performance Reviews</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3"><h5 class="mb-0 fw-semibold">My Team Directory</h5></div>
+    <div class="card-body">
+        {% if team_directory %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light"><tr><th>Employee</th><th>Department</th><th>Email</th><th>Status</th></tr></thead>
+                <tbody>
+                    {% for member in team_directory %}
+                    <tr>
+                        <td class="fw-semibold">{{ member.first_name }} {{ member.last_name }}</td>
+                        <td>{{ member.department.name }}</td>
+                        <td class="text-break">{{ member.email }}</td>
+                        <td>
+                            {% if member.employment_status == 'ACTIVE' %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-secondary">{{ member.get_employment_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted mb-0">No employees currently report to you.</p>
+        {% endif %}
+    </div>
+</div>
+
+<h4 class="mb-3">Quick Actions</h4>
+<div class="row g-3 mb-4">
+    <div class="col-md-4"><a href="{% url 'leave_request_list' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-calendar-check me-2"></i>Review Leave Requests</a></div>
+    <div class="col-md-4"><a href="{% url 'employee_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-people me-2"></i>View Employees</a></div>
+    <div class="col-md-4"><a href="{% url 'performance_review_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-graph-up me-2"></i>View Performance</a></div>
+</div>
+{% else %}
+<div class="alert alert-warning">Your manager account is not linked to an employee profile. Please contact HR.</div>
+{% endif %}
+
+{% elif can_view_payroll_stats and not can_view_hr_stats %}
+<!-- PAYROLL ADMINISTRATOR PORTAL -->
+<div class="rounded-4 p-4 p-md-5 mb-4 text-white shadow-sm" style="background:linear-gradient(110deg,#154b8c,#172554)">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <div class="small text-white-50 text-uppercase mb-2">Payroll Administrator Portal</div>
+      <h2 class="fw-bold mb-2">Hello, {{ user.first_name|default:user.username }}! 👋</h2>
+      <p class="mb-0 text-white-50">Monitor payroll processing, completed payments, and financial summaries.</p>
+    </div>
+    <span class="badge bg-white text-primary fs-6 px-3 py-2"><i class="bi bi-wallet2 me-2"></i>Payroll Operations</span>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-calendar3 me-2"></i>Total Payroll Runs</div><h2 class="fw-bold text-primary mb-1">{{ payroll_runs }}</h2><small class="text-muted">All payroll periods</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-hourglass-split me-2"></i>Pending Payroll</div><h2 class="fw-bold text-warning mb-1">{{ pending_payroll_runs }}</h2><small class="text-muted">Awaiting processing</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-check-circle me-2"></i>Completed Payroll</div><h2 class="fw-bold text-success mb-1">{{ completed_payroll_runs }}</h2><small class="text-muted">Successfully completed runs</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-exclamation-triangle me-2"></i>Failed Payroll</div><h2 class="fw-bold text-danger mb-1">{{ failed_payroll_runs }}</h2><small class="text-muted">Runs requiring investigation</small></div></div></div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-xl-7"><div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-white d-flex justify-content-between align-items-center gap-2 py-3"><h5 class="mb-0 fw-semibold">Payroll Processing Queue</h5><a href="{% url 'payroll_run_list' %}" class="btn btn-sm btn-outline-primary">View All</a></div>
+    <div class="card-body">
+      {% if pending_payroll_queue %}
+      <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Period</th><th>Status</th><th>Action</th></tr></thead>
+        <tbody>{% for run in pending_payroll_queue %}<tr><td class="fw-semibold">{{ run.period }}</td><td><span class="badge bg-warning text-dark">{{ run.get_status_display }}</span></td><td><a href="{% url 'payroll_run_list' %}" class="btn btn-sm btn-outline-primary">Review</a></td></tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="text-center text-muted py-4"><i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>No pending payroll runs.</div>{% endif %}
+    </div>
+  </div></div>
+  <div class="col-xl-5"><div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-white py-3"><h5 class="mb-0 fw-semibold">Payroll Summary</h5></div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><span class="text-muted">Payslips Generated</span><strong>{{ payslips_generated }}</strong></div>
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><span class="text-muted">Currently Processing</span><strong>{{ processing_payroll_runs }}</strong></div>
+      <div class="d-flex justify-content-between align-items-center"><span class="text-muted">Latest Completed Period</span><strong>{% if latest_completed_payroll %}{{ latest_completed_payroll.period }}{% else %}Not available{% endif %}</strong></div>
+    </div>
+  </div></div>
+</div>
+
+<h4 class="mb-3">Financial Overview</h4>
+<p class="text-muted small mb-3">Cumulative totals from completed payroll runs only.</p>
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2">Total Gross Pay</div><h4 class="fw-bold text-primary mb-0">AUD {{ payroll_total_gross|floatformat:2 }}</h4></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2">Total Net Pay</div><h4 class="fw-bold text-success mb-0">AUD {{ payroll_total_net|floatformat:2 }}</h4></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2">Total Tax</div><h4 class="fw-bold text-warning mb-0">AUD {{ payroll_total_tax|floatformat:2 }}</h4></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2">Total Deductions</div><h4 class="fw-bold text-info mb-0">AUD {{ payroll_total_deductions|floatformat:2 }}</h4></div></div></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white d-flex justify-content-between align-items-center py-3"><h5 class="mb-0 fw-semibold">Recent Payroll Activity</h5><a href="{% url 'payroll_run_list' %}" class="btn btn-sm btn-outline-primary">All Payroll Runs</a></div>
+  <div class="card-body">
+    {% if recent_payroll_runs %}<div class="table-responsive"><table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Period</th><th>Status</th><th>Processed At</th></tr></thead>
+      <tbody>{% for run in recent_payroll_runs %}<tr><td class="fw-semibold">{{ run.period }}</td><td>
+      {% if run.status == 'COMPLETED' %}<span class="badge bg-success">Completed</span>
+      {% elif run.status == 'PENDING' %}<span class="badge bg-warning text-dark">Pending</span>
+      {% elif run.status == 'FAILED' %}<span class="badge bg-danger">Failed</span>
+      {% else %}<span class="badge bg-info text-dark">{{ run.get_status_display }}</span>{% endif %}
+      </td><td>{% if run.run_at %}{{ run.run_at|date:'d M Y, H:i' }}{% else %}—{% endif %}</td></tr>{% endfor %}</tbody>
+    </table></div>{% else %}<p class="text-muted mb-0">No payroll runs recorded yet.</p>{% endif %}
+  </div>
+</div>
+
+<h4 class="mb-3">Quick Actions</h4>
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><a href="{% url 'payroll_run_list' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-wallet2 me-2"></i>Manage Payroll Runs</a></div>
+  <div class="col-md-6"><a href="/notifications/" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-bell me-2"></i>View Notifications</a></div>
+</div>
+
+{% elif can_view_hr_stats %}
+<!-- HR OFFICER PORTAL -->
+<div class="hr-portal">
+<div class="rounded-4 p-4 p-md-5 mb-4 text-white shadow-sm" style="background:linear-gradient(110deg,#116466,#164e63)">
+  <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+    <div>
+      <div class="small text-white-50 text-uppercase mb-2">HR Officer Portal</div>
+      <h2 class="fw-bold mb-2">Hello, {{ user.first_name|default:user.username }}! 👋</h2>
+      <p class="mb-0 text-white-50">Your workforce overview, leave approvals, and employee activity.</p>
+    </div>
+    <span class="badge bg-white hr-hero-badge fs-6 px-3 py-2"><i class="bi bi-person-badge me-2"></i>Human Resources</span>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-people me-2"></i>Total Employees</div><h2 class="fw-bold text-primary mb-1">{{ total_employees }}</h2><small class="text-muted">All employee records</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-person-check me-2"></i>Active Employees</div><h2 class="fw-bold text-success mb-1">{{ active_employees }}</h2><small class="text-muted">Currently active</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-hourglass-split me-2"></i>Awaiting HR Approval</div><h2 class="fw-bold text-warning mb-1">{{ awaiting_hr_approval }}</h2><small class="text-muted">Approved by line managers</small></div></div></div>
+  <div class="col-sm-6 col-xl-3"><div class="card border-0 shadow-sm h-100"><div class="card-body p-4"><div class="text-muted small mb-2"><i class="bi bi-calendar-check me-2"></i>Approved Leave</div><h2 class="fw-bold text-info mb-1">{{ approved_leaves }}</h2><small class="text-muted">Finalized leave requests</small></div></div></div>
+</div>
+
+<div class="row g-4 mb-4">
+  <div class="col-xl-7"><div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center gap-2"><h5 class="mb-0 fw-semibold">Leave Requests Awaiting HR Approval</h5><a href="{% url 'leave_request_list' %}" class="btn btn-sm btn-outline-primary">View All</a></div>
+    <div class="card-body">
+      {% if hr_approval_queue %}
+      <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+        <thead class="table-light"><tr><th>Employee</th><th>Leave Type</th><th>Dates</th><th>Action</th></tr></thead>
+        <tbody>{% for leave in hr_approval_queue %}<tr>
+          <td class="fw-semibold">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</td>
+          <td>{{ leave.leave_type.name }}</td>
+          <td class="small">{{ leave.start_date|date:'d M Y' }} – {{ leave.end_date|date:'d M Y' }}</td>
+          <td><a href="{% url 'leave_request_list' %}" class="btn btn-sm btn-outline-primary">Review</a></td>
+        </tr>{% endfor %}</tbody>
+      </table></div>
+      {% else %}<div class="text-center text-muted py-4"><i class="bi bi-check-circle fs-2 text-success d-block mb-2"></i>No requests currently awaiting HR approval.</div>{% endif %}
+    </div>
+  </div></div>
+  <div class="col-xl-5"><div class="card border-0 shadow-sm h-100">
+    <div class="card-header bg-white py-3"><h5 class="mb-0 fw-semibold">Workforce & Leave Summary</h5></div>
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><span class="text-muted">Pending Manager Review</span><strong class="text-warning">{{ pending_leaves }}</strong></div>
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><span class="text-muted">Inactive Employees</span><strong>{{ inactive_employees }}</strong></div>
+      <div class="d-flex justify-content-between align-items-center border-bottom pb-3 mb-3"><span class="text-muted">Terminated Employees</span><strong>{{ terminated_employees }}</strong></div>
+      <div class="d-flex justify-content-between align-items-center"><span class="text-muted">Total Leave Requests</span><strong>{{ total_leave_requests }}</strong></div>
+    </div>
+  </div></div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center gap-2"><h5 class="mb-0 fw-semibold">Recent Employee Records</h5><a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-primary">View Employees</a></div>
+  <div class="card-body">
+    {% if recent_employees %}
+    <div class="table-responsive"><table class="table table-hover align-middle mb-0">
+      <thead class="table-light"><tr><th>Employee</th><th>Department</th><th>Joined</th><th>Status</th></tr></thead>
+      <tbody>{% for member in recent_employees %}<tr>
+        <td class="fw-semibold">{{ member.first_name }} {{ member.last_name }}</td>
+        <td>{{ member.department.name|default:'Not assigned' }}</td>
+        <td>{{ member.hire_date|date:'d M Y' }}</td>
+        <td>{% if member.employment_status == 'ACTIVE' %}<span class="badge bg-success">Active</span>{% elif member.employment_status == 'INACTIVE' %}<span class="badge bg-secondary">Inactive</span>{% else %}<span class="badge bg-dark">{{ member.get_employment_status_display }}</span>{% endif %}</td>
+      </tr>{% endfor %}</tbody>
+    </table></div>
+    {% else %}<p class="text-muted mb-0">No employee records available.</p>{% endif %}
+  </div>
+</div>
+
+<h4 class="mb-3">HR Quick Actions</h4>
+<div class="row g-3 mb-4">
+  <div class="col-md-6 col-xl-3"><a href="{% url 'employee_list' %}" class="btn btn-primary w-100 py-3"><i class="bi bi-people me-2"></i>Manage Employees</a></div>
+  <div class="col-md-6 col-xl-3"><a href="{% url 'leave_request_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-calendar-check me-2"></i>Leave Approvals</a></div>
+  <div class="col-md-6 col-xl-3"><a href="{% url 'performance_review_list' %}" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-graph-up me-2"></i>Performance</a></div>
+  <div class="col-md-6 col-xl-3"><a href="/notifications/" class="btn btn-outline-primary w-100 py-3"><i class="bi bi-bell me-2"></i>Notifications</a></div>
+</div>
+<div class="row g-3 mb-4">
+  <div class="col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h5>User Accounts</h5><p class="text-muted">Manage system users and roles.</p><a href="{% url 'user_account_list' %}" class="btn btn-outline-primary">Manage Accounts</a></div></div></div>
+  <div class="col-md-6"><div class="card shadow-sm border-0 h-100"><div class="card-body"><h5>Audit Logs</h5><p class="text-muted">Review recorded system activity.</p><a href="{% url 'audit_log_list' %}" class="btn btn-outline-primary">View Audit Logs</a></div></div></div>
+</div>
+
+</div>
+{% else %}
+<div class="d-flex justify-content-between align-items-center mb-4"><div><h2 class="fw-bold mb-2">Dashboard</h2><p class="text-muted mb-0">Welcome back, {{ user.username }}!</p></div></div>
+{% if can_view_hr_stats %}<div class="row g-4 mb-4"><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Total Employees</h6><h2 class="fw-bold text-primary">{{ total_employees }}</h2></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Active Employees</h6><h2 class="fw-bold text-success">{{ active_employees }}</h2></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Pending Leave Requests</h6><h2 class="fw-bold text-warning">{{ pending_leaves }}</h2></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Awaiting HR Approval</h6><h2 class="fw-bold text-info">{{ awaiting_hr_approval }}</h2></div></div></div><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Approved Leave Requests</h6><h2 class="fw-bold text-success">{{ approved_leaves }}</h2></div></div></div></div>{% endif %}
+{% if can_view_payroll_stats %}<div class="row g-4 mb-4"><div class="col-md-4"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Payroll Runs</h6><h2 class="fw-bold text-info">{{ payroll_runs }}</h2></div></div></div></div>{% endif %}
+{% if can_view_manager_stats %}<h4 class="mb-3">Team Overview</h4><div class="row g-4 mb-4"><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Team Members</h6><h2 class="fw-bold text-primary">{{ team_members|default_if_none:'—' }}</h2></div></div></div><div class="col-md-6"><div class="card border-0 shadow-sm"><div class="card-body"><h6 class="text-muted">Pending Team Leave Requests</h6><h2 class="fw-bold text-warning">{{ pending_team_leaves|default_if_none:'—' }}</h2></div></div></div></div>{% endif %}
+<h4 class="mb-3">Management Modules</h4><div class="row g-4"><div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>Employee Management</h5><p class="text-muted">View employee records and department information.</p><a href="{% url 'employee_list' %}" class="btn btn-primary">View Employees</a></div></div></div><div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>Leave Management</h5><p class="text-muted">Manage leave requests and approvals.</p><a href="{% url 'leave_request_list' %}" class="btn btn-primary">View Leave Requests</a></div></div></div><div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>Performance Management</h5><p class="text-muted">Manage employee performance reviews.</p><a href="{% url 'performance_review_list' %}" class="btn btn-primary">View Performance</a></div></div></div>{% if can_view_payroll_stats %}<div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>Payroll Management</h5><p class="text-muted">Manage payroll runs and payslips.</p><a href="{% url 'payroll_run_list' %}" class="btn btn-primary">View Payroll</a></div></div></div>{% endif %}{% if can_view_hr_stats %}<div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>User Accounts</h5><p class="text-muted">Manage system users and roles.</p><a href="/api/accounts/users/" class="btn btn-primary">Manage Accounts</a></div></div></div><div class="col-md-6 col-lg-4"><div class="card shadow-sm h-100"><div class="card-body"><h5>Audit Logs</h5><p class="text-muted">View system activity and audit history.</p><a href="{% url 'audit_log_list' %}" class="btn btn-primary">View Audit Logs</a></div></div></div>{% endif %}</div>
+{% endif %}
+{% endblock %}

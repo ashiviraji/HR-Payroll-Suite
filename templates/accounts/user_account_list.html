@@ -1,0 +1,210 @@
+
+{% extends 'base.html' %}
+
+{% block title %}User Accounts | HR Payroll System{% endblock %}
+
+{% block content %}
+<style>
+    .accounts-page {
+        --teal: #146a6c;
+        --deep: #174f65;
+        --soft: #e9f5f3;
+    }
+
+    .accounts-page .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .accounts-page .table thead th {
+        background-color: var(--soft);
+        color: var(--deep);
+        padding: 15px;
+        font-weight: 600;
+    }
+
+    .accounts-page .table td {
+        padding: 14px 15px;
+        vertical-align: middle;
+    }
+
+    .accounts-page .btn-teal {
+        background-color: var(--teal);
+        color: white;
+        border: 1px solid var(--teal);
+    }
+
+    .accounts-page .btn-teal:hover {
+        background-color: var(--deep);
+        color: white;
+    }
+
+    .accounts-page .btn-outline-teal {
+        border: 1px solid var(--teal);
+        color: var(--teal);
+    }
+
+    .accounts-page .btn-outline-teal:hover {
+        background-color: var(--teal);
+        color: white;
+    }
+</style>
+
+<div class="accounts-page">
+
+    <!-- Page Header -->
+    <div class="rounded-4 p-4 mb-4 text-white shadow-sm"
+         style="background: linear-gradient(110deg,#116466,#164e63)">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="small text-white-50 text-uppercase mb-2">
+                    HR Officer Portal
+                </div>
+
+                <h2 class="fw-bold mb-2">
+                    <i class="bi bi-people me-2"></i>
+                    User Accounts Management
+                </h2>
+
+                <p class="mb-0 text-white-50">
+                    Create and manage user accounts, assigned roles
+                    and account status.
+                </p>
+            </div>
+
+            <a href="{% url 'dashboard' %}" class="btn btn-light">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- User Accounts Table -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <div class="d-flex justify-content-between
+                        align-items-center flex-wrap gap-2">
+
+                <h5 class="fw-semibold mb-0">
+                    <i class="bi bi-person-lines-fill me-2"></i>
+                    Registered User Accounts
+                </h5>
+
+                <!-- Create User Account -->
+                <a href="{% url 'user_account_create' %}"
+                   class="btn btn-teal">
+                    <i class="bi bi-person-plus me-1"></i>
+                    Create User Account
+                </a>
+
+            </div>
+        </div>
+
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Role</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {% for account in user_accounts %}
+                        <tr>
+
+                            <!-- Username -->
+                            <td>
+                                <i class="bi bi-person-circle me-2"></i>
+                                <strong>{{ account.username }}</strong>
+                            </td>
+
+                            <!-- Email -->
+                            <td>
+                                {{ account.email|default:"—" }}
+                            </td>
+
+                            <!-- Role -->
+                            <td>
+                                {% if account.is_superuser %}
+                                    <span class="badge bg-dark">
+                                        Superuser
+                                    </span>
+                                {% elif account.role.role_name == 'HR_OFFICER' %}
+                                    <span class="badge bg-info text-dark">
+                                        HR Officer
+                                    </span>
+                                {% elif account.role.role_name == 'LINE_MANAGER' %}
+                                    <span class="badge bg-primary">
+                                        Line Manager
+                                    </span>
+                                {% elif account.role.role_name == 'PAYROLL_ADMIN' %}
+                                    <span class="badge bg-warning text-dark">
+                                        Payroll Admin
+                                    </span>
+                                {% elif account.role.role_name == 'EMPLOYEE' %}
+                                    <span class="badge bg-secondary">
+                                        Employee
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-light text-dark">
+                                        Unassigned
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Account Status -->
+                            <td>
+                                {% if account.is_active %}
+                                    <span class="badge bg-success">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-danger">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+
+                            <!-- Actions -->
+                            <td>
+                                {% if account.is_superuser %}
+                                    <span class="text-muted">
+                                        <i class="bi bi-shield-lock me-1"></i>
+                                        Protected
+                                    </span>
+                                {% else %}
+                                    <a href="{% url 'user_account_edit' account.user_id %}"
+                                       class="btn btn-sm btn-outline-teal">
+                                        <i class="bi bi-pencil-square me-1"></i>
+                                        Edit
+                                    </a>
+                                {% endif %}
+                            </td>
+
+                        </tr>
+
+                        {% empty %}
+                        <tr>
+                            <td colspan="5"
+                                class="text-center text-muted py-5">
+                                No user accounts found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

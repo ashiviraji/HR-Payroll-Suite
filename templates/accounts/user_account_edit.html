@@ -1,0 +1,216 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Edit User Account | HR Payroll System{% endblock %}
+
+{% block content %}
+<style>
+    .edit-account-page {
+        --teal: #146a6c;
+        --deep: #174f65;
+        --soft: #e9f5f3;
+    }
+
+    .edit-account-page .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .edit-account-page .form-label {
+        font-weight: 600;
+        color: var(--deep);
+    }
+
+    .edit-account-page .form-control:focus,
+    .edit-account-page .form-select:focus {
+        border-color: var(--teal);
+        box-shadow: 0 0 0 0.2rem rgba(20, 106, 108, 0.15);
+    }
+
+    .edit-account-page .btn-teal {
+        background-color: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+
+    .edit-account-page .btn-teal:hover {
+        background-color: var(--deep);
+        border-color: var(--deep);
+        color: white;
+    }
+</style>
+
+<div class="edit-account-page">
+
+    <!-- Page Header -->
+    <div class="rounded-4 p-4 mb-4 text-white shadow-sm"
+         style="background:linear-gradient(110deg,#116466,#164e63)">
+
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="small text-white-50 text-uppercase mb-2">
+                    HR Officer Portal
+                </div>
+
+                <h2 class="fw-bold mb-2">
+                    <i class="bi bi-person-gear me-2"></i>
+                    Edit User Account
+                </h2>
+
+                <p class="mb-0 text-white-50">
+                    Update account details and assigned role.
+                </p>
+            </div>
+
+            <a href="{% url 'user_account_list' %}"
+               class="btn btn-light">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Accounts
+            </a>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="fw-semibold mb-0">
+                <i class="bi bi-pencil-square me-2"></i>
+                Account Details — {{ account.username }}
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row g-4">
+
+                    <!-- Username -->
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">
+                            Username
+                        </label>
+
+                        <input
+                            type="text"
+                            id="username"
+                            name="username"
+                            class="form-control"
+                            value="{{ account.username }}"
+                            maxlength="150"
+                            required
+                        >
+                    </div>
+
+                    <!-- Email -->
+                    <div class="col-md-6">
+                        <label for="email" class="form-label">
+                            Email Address
+                        </label>
+
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            class="form-control"
+                            value="{{ account.email }}"
+                        >
+                    </div>
+
+                    <!-- First Name -->
+                    <div class="col-md-6">
+                        <label for="first_name" class="form-label">
+                            First Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="first_name"
+                            name="first_name"
+                            class="form-control"
+                            value="{{ account.first_name }}"
+                        >
+                    </div>
+
+                    <!-- Last Name -->
+                    <div class="col-md-6">
+                        <label for="last_name" class="form-label">
+                            Last Name
+                        </label>
+
+                        <input
+                            type="text"
+                            id="last_name"
+                            name="last_name"
+                            class="form-control"
+                            value="{{ account.last_name }}"
+                        >
+                    </div>
+
+                    <!-- Role -->
+                    <div class="col-md-6">
+                        <label for="role" class="form-label">
+                            Assigned Role
+                        </label>
+
+                        <select
+                            id="role"
+                            name="role"
+                            class="form-select"
+                            required
+                        >
+                            {% for role in roles %}
+                            <option
+                                value="{{ role.role_id }}"
+                                {% if account.role_id == role.role_id %}selected{% endif %}
+                            >
+                                {{ role.get_role_name_display }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Status (Read Only) -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Account Status
+                        </label>
+
+                        <div class="form-control bg-light">
+                            {% if account.is_active %}
+                                <span class="text-success fw-semibold">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="text-danger fw-semibold">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Inactive
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <!-- Actions -->
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'user_account_list' %}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+
+                    <button type="submit" class="btn btn-teal">
+                        <i class="bi bi-check-lg me-1"></i>
+                        Save Changes
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

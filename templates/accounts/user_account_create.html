@@ -1,0 +1,218 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Create User Account | HR Payroll System
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .accounts-page {
+        --teal: #146a6c;
+        --deep: #174f65;
+    }
+
+    .accounts-page .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .accounts-page .btn-teal {
+        background-color: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+
+    .accounts-page .btn-teal:hover {
+        background-color: var(--deep);
+        color: white;
+    }
+
+    .accounts-page .form-label {
+        font-weight: 600;
+        color: var(--deep);
+    }
+</style>
+
+<div class="accounts-page">
+
+    <!-- Page Header -->
+    <div class="rounded-4 p-4 mb-4 text-white shadow-sm"
+         style="background: linear-gradient(110deg,#116466,#164e63)">
+
+        <div class="d-flex justify-content-between
+                    align-items-center flex-wrap gap-3">
+
+            <div>
+                <div class="small text-white-50 text-uppercase mb-2">
+                    HR Officer Portal
+                </div>
+
+                <h2 class="fw-bold mb-2">
+                    <i class="bi bi-person-plus me-2"></i>
+                    Create User Account
+                </h2>
+
+                <p class="mb-0 text-white-50">
+                    Create a login account for an existing employee.
+                </p>
+            </div>
+
+            <a href="{% url 'user_account_list' %}"
+               class="btn btn-light">
+                <i class="bi bi-arrow-left me-1"></i>
+                Back to Accounts
+            </a>
+
+        </div>
+    </div>
+
+    <!-- Account Creation Form -->
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-person-gear me-2"></i>
+                New Account Details
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags|default:'info' }}"
+                         role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="POST">
+                {% csrf_token %}
+
+                <div class="row g-4">
+
+                    <!-- Select Employee -->
+                    <div class="col-md-6">
+                        <label for="employee" class="form-label">
+                            Select Employee
+                        </label>
+
+                        <select name="employee"
+                                id="employee"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                -- Select Employee --
+                            </option>
+
+                            {% for employee in available_employees %}
+                                <option value="{{ employee.pk }}"
+                                    {% if request.POST.employee == employee.pk|stringformat:"s" %}
+                                        selected
+                                    {% endif %}>
+                                    {{ employee.first_name }}
+                                    {{ employee.last_name }}
+                                    (ID: {{ employee.pk }})
+                                </option>
+                            {% endfor %}
+
+                        </select>
+
+                        <div class="form-text">
+                            Only active employees without an account
+                            are displayed.
+                        </div>
+                    </div>
+
+                    <!-- Username -->
+                    <div class="col-md-6">
+                        <label for="username" class="form-label">
+                            Username
+                        </label>
+
+                        <input type="text"
+                               name="username"
+                               id="username"
+                               class="form-control"
+                               value="{{ request.POST.username|default:'' }}"
+                               placeholder="e.g. emma"
+                               maxlength="150"
+                               required>
+                    </div>
+
+                    <!-- Assigned Role -->
+                    <div class="col-md-6">
+                        <label for="role" class="form-label">
+                            Assigned Role
+                        </label>
+
+                        <select name="role"
+                                id="role"
+                                class="form-select"
+                                required>
+
+                            <option value="">
+                                -- Select Role --
+                            </option>
+
+                            {% for role in roles %}
+                                <option value="{{ role.pk }}"
+                                    {% if request.POST.role == role.pk|stringformat:"s" %}
+                                        selected
+                                    {% endif %}>
+                                    {{ role.get_role_name_display }}
+                                </option>
+                            {% endfor %}
+
+                        </select>
+                    </div>
+
+                    <!-- Account Status -->
+                    <div class="col-md-6">
+                        <label class="form-label">
+                            Initial Account Status
+                        </label>
+
+                        <input type="text"
+                               class="form-control"
+                               value="Inactive — Password Setup Required"
+                               readonly>
+
+                        <div class="form-text">
+                            The account will remain inactive until
+                            the password setup and activation process
+                            is implemented.
+                        </div>
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex justify-content-end gap-2">
+
+                    <a href="{% url 'user_account_list' %}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-teal">
+                        <i class="bi bi-person-check me-1"></i>
+                        Create Account
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

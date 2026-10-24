@@ -1,0 +1,141 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Activate Account | HR Payroll System
+{% endblock %}
+
+{% block content %}
+
+<style>
+    .activation-page {
+        --teal: #146a6c;
+        --deep: #174f65;
+    }
+
+    .activation-page .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+
+    .activation-page .btn-teal {
+        background-color: var(--teal);
+        border-color: var(--teal);
+        color: white;
+    }
+
+    .activation-page .btn-teal:hover {
+        background-color: var(--deep);
+        color: white;
+    }
+
+    .activation-page .form-label {
+        font-weight: 600;
+        color: var(--deep);
+    }
+</style>
+
+<div class="activation-page">
+
+    <div class="rounded-4 p-4 mb-4 text-white shadow-sm"
+         style="background: linear-gradient(110deg,#116466,#164e63)">
+
+        <h2 class="fw-bold mb-2">
+            <i class="bi bi-shield-lock me-2"></i>
+            Account Activation
+        </h2>
+
+        <p class="mb-0 text-white-50">
+            Set your password to activate your HR Payroll account.
+        </p>
+
+    </div>
+
+    <div class="card border-0 shadow-sm">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="bi bi-key me-2"></i>
+                Password Setup
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            {% if valid_link %}
+
+                <p class="text-muted">
+                    Hello {{ account.first_name|default:account.username }},
+                    please create a secure password.
+                </p>
+
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-danger">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+
+                <form method="POST">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="password1" class="form-label">
+                            New Password
+                        </label>
+
+                        <input type="password"
+                               name="password1"
+                               id="password1"
+                               class="form-control"
+                               autocomplete="new-password"
+                               required>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password2" class="form-label">
+                            Confirm Password
+                        </label>
+
+                        <input type="password"
+                               name="password2"
+                               id="password2"
+                               class="form-control"
+                               autocomplete="new-password"
+                               required>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-teal">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Set Password & Activate Account
+                    </button>
+
+                </form>
+
+            {% else %}
+
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    This invitation link is invalid or has expired.
+                </div>
+
+                <p class="text-muted">
+                    Please contact your HR Officer to request
+                    a new invitation.
+                </p>
+
+                <a href="{% url 'login' %}"
+                   class="btn btn-outline-secondary">
+                    Back to Login
+                </a>
+
+            {% endif %}
+
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

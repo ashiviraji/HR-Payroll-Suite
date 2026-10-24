@@ -1,0 +1,202 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+Payslip Management | HR Payroll System
+{% endblock %}
+
+{% block content %}
+
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="fw-bold mb-1">Payslip Management</h2>
+        <p class="text-muted mb-0">
+            View generated employee payslips for
+            Payroll Run #{{ payroll_run.run_id }}.
+        </p>
+    </div>
+
+    <a href="{% url 'payroll_run_list' %}"
+       class="btn btn-outline-secondary">
+        Back to Payroll
+    </a>
+</div>
+
+<!-- Payroll Run Information -->
+<div class="card shadow-sm border-0 mb-4">
+    <div class="card-body">
+        <div class="row g-3">
+
+            <div class="col-md-3">
+                <small class="text-muted d-block">
+                    Payroll Period
+                </small>
+                <strong>{{ payroll_run.period }}</strong>
+            </div>
+
+            <div class="col-md-3">
+                <small class="text-muted d-block">
+                    Tax Table
+                </small>
+                <strong>
+                    {{ payroll_run.tax_table.financial_year }}
+                </strong>
+            </div>
+
+            <div class="col-md-3">
+                <small class="text-muted d-block">
+                    Payroll Status
+                </small>
+
+                {% if payroll_run.status == 'COMPLETED' %}
+                    <span class="badge bg-success">
+                        Completed
+                    </span>
+                {% elif payroll_run.status == 'PENDING' %}
+                    <span class="badge bg-warning text-dark">
+                        Pending
+                    </span>
+                {% else %}
+                    <span class="badge bg-secondary">
+                        {{ payroll_run.get_status_display }}
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="col-md-3">
+                <small class="text-muted d-block">
+                    Total Payslips
+                </small>
+                <strong>{{ payslip_count }}</strong>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Payroll Summary -->
+<div class="row g-3 mb-4">
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Gross Pay</p>
+                <h4 class="fw-bold mb-0">
+                    ${{ totals.total_gross|default_if_none:"0.00"|floatformat:2 }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Deductions</p>
+                <h4 class="fw-bold mb-0">
+                    ${{ totals.total_deductions|default_if_none:"0.00"|floatformat:2 }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-body">
+                <p class="text-muted mb-2">Total Net Pay</p>
+                <h4 class="fw-bold text-success mb-0">
+                    ${{ totals.total_net|default_if_none:"0.00"|floatformat:2 }}
+                </h4>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- Payslip Records -->
+<div class="card shadow-sm border-0">
+
+    <div class="card-header bg-white py-3">
+        <h5 class="fw-semibold mb-0">
+            Employee Payslips
+        </h5>
+    </div>
+
+    <div class="card-body">
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Payslip ID</th>
+                        <th>Employee</th>
+                        <th>Gross Pay</th>
+                        <th>Tax Amount</th>
+                        <th>Total Deductions</th>
+                        <th>Net Pay</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    {% for payslip in payslips %}
+
+                    <tr>
+                        <td>
+                            <strong>
+                                #{{ payslip.payslip_id }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            {{ payslip.employee }}
+                        </td>
+
+                        <td>
+                            ${{ payslip.gross_pay|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            ${{ payslip.tax_amount|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            ${{ payslip.total_deductions|floatformat:2 }}
+                        </td>
+
+                        <td>
+                            <strong class="text-success">
+                                ${{ payslip.net_pay|floatformat:2 }}
+                            </strong>
+                        </td>
+
+                        <td>
+                            <a
+                                href="{% url 'payslip-download-payslip' payslip.payslip_id %}"
+                                class="btn btn-sm btn-outline-primary">
+                                Download PDF
+                            </a>
+                        </td>
+                    </tr>
+
+                    {% empty %}
+
+                    <tr>
+                        <td colspan="7"
+                            class="text-center text-muted py-4">
+                            No payslips found for this payroll run.
+                        </td>
+                    </tr>
+
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

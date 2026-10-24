@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Logs | HR Payroll System{% endblock %}
+
+{% block content %}
+<style>
+    .audit-page {
+        --audit-teal: #146a6c;
+        --audit-deep: #174f65;
+        --audit-soft: #e9f5f3;
+    }
+    .audit-page .card {
+        border-radius: 14px;
+        overflow: hidden;
+    }
+    .audit-page .table thead th {
+        background-color: var(--audit-soft);
+        color: var(--audit-deep);
+        font-weight: 600;
+        padding: 15px;
+        white-space: nowrap;
+    }
+    .audit-page .table td {
+        padding: 14px 15px;
+        vertical-align: middle;
+    }
+    .audit-page .btn-primary {
+        background-color: var(--audit-teal);
+        border-color: var(--audit-teal);
+    }
+    .audit-page .btn-primary:hover {
+        background-color: var(--audit-deep);
+        border-color: var(--audit-deep);
+    }
+    .audit-page .page-link { color: var(--audit-teal); }
+    .audit-page .page-item.active .page-link {
+        background-color: var(--audit-teal);
+        border-color: var(--audit-teal);
+        color: white;
+    }
+</style>
+
+<div class="audit-page">
+    <div class="rounded-4 p-4 mb-4 text-white shadow-sm"
+         style="background: linear-gradient(110deg,#116466,#164e63)">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div class="small text-white-50 text-uppercase mb-2">HR Officer Portal</div>
+                <h2 class="fw-bold mb-2">Audit Logs</h2>
+                <p class="mb-0 text-white-50">Review recorded system activities and user actions.</p>
+            </div>
+            <a href="{% url 'dashboard' %}" class="btn btn-light">
+                <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Search and action filter -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form method="get" action="{% url 'audit_log_list' %}" class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label for="auditSearch" class="form-label fw-semibold">Search Audit Logs</label>
+                    <input type="search" id="auditSearch" name="search" class="form-control"
+                           placeholder="Search username or entity..." value="{{ search_query }}">
+                </div>
+                <div class="col-md-3">
+                    <label for="auditAction" class="form-label fw-semibold">Action</label>
+                    <select id="auditAction" name="action" class="form-select">
+                        <option value="">All Actions</option>
+                        {% for action in action_choices %}
+                        <option value="{{ action }}" {% if action_filter == action %}selected{% endif %}>{{ action }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary flex-fill">
+                        <i class="bi bi-search me-1"></i>Search
+                    </button>
+                    <a href="{% url 'audit_log_list' %}" class="btn btn-outline-secondary">Reset</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <h5 class="mb-0 fw-semibold">
+                <i class="bi bi-clock-history me-2"></i>System Audit History
+            </h5>
+            <span class="text-muted small">{{ page_obj.paginator.count }} record{{ page_obj.paginator.count|pluralize }}</span>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Username</th>
+                            <th>Action</th>
+                            <th>Entity</th>
+                            <th>Record ID</th>
+                            <th>Date &amp; Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in audit_logs %}
+                        <tr>
+                            <td>#{{ log.log_id }}</td>
+                            <td><i class="bi bi-person-circle me-2"></i>{{ log.user.username|default:"System" }}</td>
+                            <td>
+                                {% if log.action == 'CREATE' %}
+                                    <span class="badge bg-success">CREATE</span>
+                                {% elif log.action == 'UPDATE' %}
+                                    <span class="badge bg-primary">UPDATE</span>
+                                {% elif log.action == 'DELETE' %}
+                                    <span class="badge bg-danger">DELETE</span>
+                                {% elif log.action == 'APPROVE' %}
+                                    <span class="badge bg-info text-dark">APPROVE</span>
+                                {% elif log.action == 'REJECT' %}
+                                    <span class="badge bg-warning text-dark">REJECT</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ log.action }}</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ log.entity_name }}</td>
+                            <td>{{ log.entity_id|default_if_none:"—" }}</td>
+                            <td>{{ log.created_at|date:"d M Y, h:i A" }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="bi bi-inbox fs-2 d-block mb-2"></i>No audit records found.
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    {% if page_obj.has_other_pages %}
+    <nav aria-label="Audit log pagination" class="mb-4">
+        <ul class="pagination justify-content-center flex-wrap">
+            {% if page_obj.has_previous %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.previous_page_number }}&amp;search={{ search_query|urlencode }}&amp;action={{ action_filter|urlencode }}">Previous</a>
+            </li>
+            {% endif %}
+
+            {% for page_number in page_obj.paginator.page_range %}
+            <li class="page-item {% if page_obj.number == page_number %}active{% endif %}">
+                <a class="page-link" href="?page={{ page_number }}&amp;search={{ search_query|urlencode }}&amp;action={{ action_filter|urlencode }}"
+                   {% if page_obj.number == page_number %}aria-current="page"{% endif %}>{{ page_number }}</a>
+            </li>
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ page_obj.next_page_number }}&amp;search={{ search_query|urlencode }}&amp;action={{ action_filter|urlencode }}">Next</a>
+            </li>
+            {% endif %}
+        </ul>
+    </nav>
+    {% endif %}
+</div>
+{% endblock %}

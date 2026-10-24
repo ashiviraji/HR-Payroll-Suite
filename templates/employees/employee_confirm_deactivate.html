@@ -1,0 +1,46 @@
+
+{% extends 'base.html' %}
+
+{% block title %}Deactivate Employee | HR Payroll System{% endblock %}
+
+{% block content %}
+
+<div class="mb-4">
+    <a href="{% url 'employee_detail' employee.pk %}">
+        Employees / Employee #{{ employee.pk }}
+    </a>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-header">
+        <h4 class="mb-0">Deactivate Employee</h4>
+    </div>
+
+    <div class="card-body">
+        <div class="alert alert-warning">
+            Are you sure you want to deactivate
+            <strong>{{ employee.first_name }} {{ employee.last_name }}</strong>?
+        </div>
+
+        <p class="text-muted">
+            The employee record will remain in the system,
+            but their employment status will become inactive.
+            Any linked user account will also be disabled.
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <button type="submit" class="btn btn-danger">
+                Confirm Deactivation
+            </button>
+
+            <a href="{% url 'employee_detail' employee.pk %}"
+               class="btn btn-secondary">
+                Cancel
+            </a>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

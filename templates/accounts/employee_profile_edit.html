@@ -1,0 +1,185 @@
+
+{% extends "base.html" %}
+
+{% block title %}Edit My Profile | HR Payroll System{% endblock %}
+
+{% block content %}
+
+<style>
+    .profile-page {
+        --teal: #146a6c;
+        --deep: #174f65;
+        --soft: #e9f5f3;
+    }
+
+    .profile-page .profile-header {
+        background: linear-gradient(110deg, #116466, #164e63);
+        color: white;
+        border-radius: 16px;
+        padding: 32px;
+        margin-bottom: 28px;
+    }
+
+    .profile-page .profile-card {
+        background: white;
+        border-radius: 14px;
+        box-shadow: 0 3px 12px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+    }
+
+    .profile-page .card-heading {
+        padding: 20px 24px;
+        border-bottom: 1px solid #dee2e6;
+        font-size: 21px;
+        font-weight: 600;
+    }
+
+    .profile-page .form-label {
+        font-weight: 500;
+        color: #174f65;
+    }
+
+    .profile-page .btn-teal {
+        background-color: #146a6c;
+        border-color: #146a6c;
+        color: white;
+    }
+
+    .profile-page .btn-teal:hover {
+        background-color: #10585a;
+        color: white;
+    }
+</style>
+
+<div class="container py-4 profile-page">
+
+    <div class="profile-header d-flex justify-content-between align-items-center">
+        <div>
+            <div class="text-white-50 mb-2">EMPLOYEE PORTAL</div>
+            <h2 class="fw-bold mb-2">
+                <i class="bi bi-person-circle me-2"></i>
+                My Profile
+            </h2>
+            <p class="mb-0 text-white-50">
+                View and update your personal account information.
+            </p>
+        </div>
+
+        <a href="/" class="btn btn-light">
+            <i class="bi bi-arrow-left me-1"></i>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="profile-card">
+
+        <div class="card-heading">
+            <i class="bi bi-pencil-square me-2"></i>
+            Edit Profile Information
+        </div>
+
+        <div class="p-4">
+
+            <form method="post">
+                {% csrf_token %}
+
+                <div class="row g-3">
+
+                    <div class="col-md-6">
+                        <label class="form-label">Username</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ account.username }}"
+                            disabled
+                        >
+                        <div class="form-text">
+                            Your username cannot be changed.
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Email Address</label>
+                        <input
+                            type="email"
+                            name="email"
+                            class="form-control"
+                            value="{{ account.email }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">First Name</label>
+                        <input
+                            type="text"
+                            name="first_name"
+                            class="form-control"
+                            value="{{ account.first_name }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Last Name</label>
+                        <input
+                            type="text"
+                            name="last_name"
+                            class="form-control"
+                            value="{{ account.last_name }}"
+                            required
+                        >
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Assigned Role</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{{ account.role }}"
+                            disabled
+                        >
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label">Account Status</label>
+                        <input
+                            type="text"
+                            class="form-control"
+                            value="{% if account.is_active %}Active{% else %}Inactive{% endif %}"
+                            disabled
+                        >
+                    </div>
+
+                </div>
+
+                <hr class="my-4">
+
+                <div class="d-flex gap-2 flex-wrap">
+
+                    <button type="submit" class="btn btn-teal">
+                        <i class="bi bi-check-circle me-1"></i>
+                        Save Changes
+                    </button>
+
+                    <a
+                        href="{% url 'employee_change_password' %}"
+                        class="btn btn-outline-secondary"
+                    >
+                        <i class="bi bi-key me-1"></i>
+                        Change Password
+                    </a>
+
+                    <a href="/" class="btn btn-light">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}
