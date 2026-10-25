@@ -1,5 +1,6 @@
 
 {% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -155,35 +156,89 @@
                         </a>
                     </li>
 
-                    <!-- Role-specific navigation -->
+                    <!-- =================================================
+                         EMPLOYEE MANAGEMENT
+                    ================================================= -->
+
                     {% if user.is_superuser or user.role.role_name == 'LINE_MANAGER' or user.role.role_name == 'HR_OFFICER' or user.role.role_name == 'PAYROLL_ADMIN' %}
+
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'employee_list' %}">Employees</a>
+                        <a class="nav-link"
+                           href="{% url 'employee_list' %}">
+                            Employees
+                        </a>
                     </li>
+
                     {% endif %}
+
+
+                    <!-- =================================================
+                         LEAVE AND PERFORMANCE MANAGEMENT
+                    ================================================= -->
 
                     {% if user.is_superuser or user.role.role_name == 'EMPLOYEE' or user.role.role_name == 'LINE_MANAGER' or user.role.role_name == 'HR_OFFICER' %}
+
+                    <!-- Leave Management -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'leave_request_list' %}">Leave</a>
+                        <a class="nav-link"
+                           href="{% url 'leave_request_list' %}">
+                            Leave
+                        </a>
                     </li>
+
+                    <!-- Performance Management -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'performance_review_list' %}">Performance</a>
+                        <a class="nav-link"
+                           href="{% url 'performance_review_list' %}">
+                            Performance
+                        </a>
                     </li>
+
                     {% endif %}
+
+
+                    <!-- =================================================
+                         PAYROLL ADMINISTRATOR NAVIGATION
+                    ================================================= -->
 
                     {% if user.is_superuser or user.role.role_name == 'PAYROLL_ADMIN' %}
+
+                    <!-- Payroll Management -->
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'payroll_run_list' %}">Payroll</a>
+                        <a class="nav-link"
+                           href="{% url 'payroll_run_list' %}">
+                            Payroll
+                        </a>
                     </li>
+
+                    <!-- Salary Management -->
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="{% url 'salary_record_list' %}">
+                            Salary Management
+                        </a>
+                    </li>
+
                     {% endif %}
 
+
+                    <!-- =================================================
+                         AUDIT LOG MANAGEMENT
+                    ================================================= -->
+
                     {% if user.is_superuser or user.role.role_name == 'HR_OFFICER' %}
+
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'audit_log_list' %}">Audit Logs</a>
+                        <a class="nav-link"
+                           href="{% url 'audit_log_list' %}">
+                            Audit Logs
+                        </a>
                     </li>
+
                     {% endif %}
 
                 </ul>
+
 
                 <!-- =================================================
                      NOTIFICATION BELL AND USER ACCOUNT
@@ -217,10 +272,12 @@
 
                     </a>
 
+
                     <!-- Logged-in Username -->
                     <span class="navbar-text text-white">
                         {{ user.username }}
                     </span>
+
 
                     <!-- Logout -->
                     <form

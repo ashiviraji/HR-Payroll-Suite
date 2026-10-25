@@ -15,8 +15,17 @@ from django.views.decorators.http import require_POST
 
 from audit.utils import create_audit_log
 
-from .models import PayrollRun, Payslip
-from .forms import PayrollRunForm
+from .models import (
+    PayrollRun,
+    Payslip,
+    SalaryRecord,
+)
+
+from .forms import (
+    PayrollRunForm,
+    SalaryRecordForm,
+)
+
 from .tasks import process_payroll_task
 
 
@@ -28,47 +37,36 @@ logger = logging.getLogger(__name__)
 # =========================================================
 
 def get_role_name(user):
-    """
-    Return the logged-in user's role.
-    """
 
     if user.is_superuser:
         return 'SUPERUSER'
 
-    if user.role_id is None:
-        return None
+    role = getattr(user, 'role', None)
 
-    return user.role.role_name
+    if role:
+        return role.role_name
+
+    return None
 
 
 def is_payroll_admin(user):
-    """
-    Check whether the user can manage payroll.
-    """
 
-    return (
-        user.is_superuser
-        or get_role_name(user) == 'PAYROLL_ADMIN'
-    )
+    if user.is_superuser:
+        return True
+
+    return get_role_name(user) == 'PAYROLL_ADMIN'
 
 
 # =========================================================
-# 2. PAYROLL RUN LIST
+# 2. VIEW PAYROLL RUNS
 # =========================================================
 
 @login_required
 def payroll_run_list(request):
-    """
-    Display all payroll runs.
-
-    Only Payroll Admins and Superusers
-    can access this page.
-    """
 
     if not is_payroll_admin(request.user):
         raise PermissionDenied(
-            'You do not have permission '
-            'to access payroll management.'
+            'Only Payroll Administrators can view payroll runs.'
         )
 
     payroll_runs = (
@@ -83,7 +81,6 @@ def payroll_run_list(request):
         'payroll/payroll_run_list.html',
         {
             'payroll_runs': payroll_runs,
-            'can_manage_payroll': True,
         }
     )
 
@@ -94,17 +91,10 @@ def payroll_run_list(request):
 
 @login_required
 def payroll_run_create(request):
-    """
-    Create a new payroll run.
-
-    Only Payroll Admins and Superusers
-    can create payroll runs.
-    """
 
     if not is_payroll_admin(request.user):
         raise PermissionDenied(
-            'You do not have permission '
-            'to create payroll runs.'
+            'Only Payroll Administrators can create payroll runs.'
         )
 
     if request.method == 'POST':
@@ -126,8 +116,7 @@ def payroll_run_create(request):
 
             messages.success(
                 request,
-                f'Payroll run #{payroll_run.run_id} '
-                'created successfully.'
+                'Payroll run created successfully.'
             )
 
             return redirect('payroll_run_list')
@@ -151,91 +140,57 @@ def payroll_run_create(request):
 @login_required
 @require_POST
 def payroll_run_process(request, run_id):
-    """
-    Queue a pending payroll run for background processing.
-
-    Workflow:
-    1. Verify Payroll Admin permissions.
-    2. Atomically reserve the pending payroll run.
-    3. Change status to PROCESSING.
-    4. Submit the job to Celery.
-    5. Display a notification.
-    """
-
-    # -----------------------------------------------------
-    # CHECK PERMISSIONS
-    # -----------------------------------------------------
 
     if not is_payroll_admin(request.user):
         raise PermissionDenied(
-            'You do not have permission '
-            'to process payroll.'
+            'Only Payroll Administrators can process payroll.'
         )
 
-    # -----------------------------------------------------
-    # VERIFY PAYROLL RUN EXISTS
-    # -----------------------------------------------------
+    with transaction.atomic():
 
-    payroll_run = get_object_or_404(
-        PayrollRun,
-        pk=run_id
-    )
-
-    # -----------------------------------------------------
-    # RESERVE THE PAYROLL RUN
-    # -----------------------------------------------------
-
-    # Conditional update prevents two requests from
-    # reserving the same pending payroll run.
-
-    reserved = (
-        PayrollRun.objects
-        .filter(
-            pk=payroll_run.pk,
+        updated = PayrollRun.objects.filter(
+            pk=run_id,
             status='PENDING'
-        )
-        .update(
+        ).update(
             status='PROCESSING'
         )
-    )
 
-    if not reserved:
+    if not updated:
 
-        messages.error(
+        payroll_run = get_object_or_404(
+            PayrollRun,
+            pk=run_id
+        )
+
+        messages.warning(
             request,
-            'Only pending payroll runs can be processed.'
+            'This payroll run cannot be processed '
+            f'because its status is {payroll_run.status}.'
         )
 
         return redirect('payroll_run_list')
 
-    # -----------------------------------------------------
-    # SUBMIT BACKGROUND TASK
-    # -----------------------------------------------------
-
     try:
 
-        async_result = process_payroll_task.delay(
-            run_id=payroll_run.run_id,
-            initiated_by_user_id=request.user.pk
+        process_payroll_task.delay(
+            run_id,
+            request.user.pk
         )
 
-        logger.info(
-            'Payroll run #%s queued as Celery task %s',
-            payroll_run.run_id,
-            async_result.id
+        messages.success(
+            request,
+            'Payroll processing has been queued successfully.'
         )
 
     except Exception:
 
         logger.exception(
-            'Failed to queue payroll run #%s',
-            payroll_run.run_id
+            'Failed to queue payroll run %s',
+            run_id
         )
 
-        # Restore the run only if it is still PROCESSING.
-        # Do not overwrite a completed run.
         PayrollRun.objects.filter(
-            pk=payroll_run.run_id,
+            pk=run_id,
             status='PROCESSING'
         ).update(
             status='PENDING'
@@ -243,93 +198,43 @@ def payroll_run_process(request, run_id):
 
         messages.error(
             request,
-            'Unable to start background payroll '
-            'processing. Please check Redis and '
-            'the Celery Worker, then try again.'
+            'Unable to queue payroll processing. '
+            'Please check the Celery worker and Redis connection.'
         )
-
-        return redirect('payroll_run_list')
-
-    # -----------------------------------------------------
-    # DISPLAY QUEUE CONFIRMATION
-    # -----------------------------------------------------
-
-    messages.success(
-        request,
-        (
-            f'Payroll run #{payroll_run.run_id} '
-            'has been submitted for background '
-            'processing. Refresh the page to '
-            'check its status.'
-        )
-    )
 
     return redirect('payroll_run_list')
 
 
 # =========================================================
-# 5. PAYSLIP MANAGEMENT
+# 5. VIEW PAYSLIPS FOR A PAYROLL RUN
 # =========================================================
 
 @login_required
 def payroll_payslip_list(request, run_id):
-    """
-    Display payslips generated for a payroll run.
-
-    Only Payroll Admins and Superusers
-    can view employee payslips.
-    """
-
-    # -----------------------------------------------------
-    # CHECK PERMISSIONS
-    # -----------------------------------------------------
 
     if not is_payroll_admin(request.user):
         raise PermissionDenied(
-            'You do not have permission '
-            'to view employee payslips.'
+            'Only Payroll Administrators can view payroll payslips.'
         )
-
-    # -----------------------------------------------------
-    # RETRIEVE PAYROLL RUN
-    # -----------------------------------------------------
 
     payroll_run = get_object_or_404(
         PayrollRun.objects.select_related('tax_table'),
         pk=run_id
     )
 
-    # -----------------------------------------------------
-    # RETRIEVE PAYSLIPS
-    # -----------------------------------------------------
-
     payslips = (
         Payslip.objects
         .filter(run=payroll_run)
-        .select_related('employee', 'run')
+        .select_related('employee')
         .order_by('employee_id')
     )
-
-    # -----------------------------------------------------
-    # CALCULATE PAYROLL TOTALS
-    # -----------------------------------------------------
 
     totals = payslips.aggregate(
         total_gross=Sum('gross_pay'),
         total_tax=Sum('tax_amount'),
         total_deductions=Sum('total_deductions'),
-        total_net=Sum('net_pay'),
+        total_net=Sum('net_pay')
     )
-
-    # -----------------------------------------------------
-    # COUNT GENERATED PAYSLIPS
-    # -----------------------------------------------------
-
-    payslip_count = payslips.count()
-
-    # -----------------------------------------------------
-    # RENDER PAYSLIP MANAGEMENT PAGE
-    # -----------------------------------------------------
 
     return render(
         request,
@@ -338,6 +243,145 @@ def payroll_payslip_list(request, run_id):
             'payroll_run': payroll_run,
             'payslips': payslips,
             'totals': totals,
-            'payslip_count': payslip_count,
+        }
+    )
+
+
+# =========================================================
+# 6. VIEW EMPLOYEE SALARY RECORDS
+# =========================================================
+
+@login_required
+def salary_record_list(request):
+
+    if not is_payroll_admin(request.user):
+        raise PermissionDenied(
+            'Only Payroll Administrators can view salary records.'
+        )
+
+    salary_records = (
+        SalaryRecord.objects
+        .select_related('employee')
+        .order_by(
+            'employee_id',
+            '-effective_from'
+        )
+    )
+
+    return render(
+        request,
+        'payroll/salary_record_list.html',
+        {
+            'salary_records': salary_records,
+        }
+    )
+
+
+# =========================================================
+# 7. CREATE EMPLOYEE SALARY RECORD
+# =========================================================
+
+@login_required
+def salary_record_create(request):
+
+    if not is_payroll_admin(request.user):
+        raise PermissionDenied(
+            'Only Payroll Administrators can create salary records.'
+        )
+
+    if request.method == 'POST':
+
+        form = SalaryRecordForm(request.POST)
+
+        if form.is_valid():
+
+            with transaction.atomic():
+
+                salary_record = form.save()
+
+                create_audit_log(
+                    user=request.user,
+                    action='CREATE',
+                    entity_name='SalaryRecord',
+                    entity_id=salary_record.salary_id
+                )
+
+            messages.success(
+                request,
+                'Employee salary record created successfully.'
+            )
+
+            return redirect('salary_record_list')
+
+    else:
+
+        form = SalaryRecordForm()
+
+    return render(
+        request,
+        'payroll/salary_record_form.html',
+        {
+            'form': form,
+            'page_title': 'Add Employee Salary',
+        }
+    )
+
+
+# =========================================================
+# 8. UPDATE EMPLOYEE SALARY RECORD
+# =========================================================
+
+@login_required
+def salary_record_update(request, salary_id):
+
+    if not is_payroll_admin(request.user):
+        raise PermissionDenied(
+            'Only Payroll Administrators can update salary records.'
+        )
+
+    salary_record = get_object_or_404(
+        SalaryRecord,
+        pk=salary_id
+    )
+
+    if request.method == 'POST':
+
+        form = SalaryRecordForm(
+            request.POST,
+            instance=salary_record
+        )
+
+        if form.is_valid():
+
+            with transaction.atomic():
+
+                updated_record = form.save()
+
+                create_audit_log(
+                    user=request.user,
+                    action='UPDATE',
+                    entity_name='SalaryRecord',
+                    entity_id=updated_record.salary_id
+                )
+
+            messages.success(
+                request,
+                'Employee salary record updated successfully.'
+            )
+
+            return redirect('salary_record_list')
+
+    else:
+
+        form = SalaryRecordForm(
+            instance=salary_record
+        )
+
+    return render(
+        request,
+        'payroll/salary_record_form.html',
+        {
+            'form': form,
+            'page_title': 'Update Employee Salary',
         }
     )

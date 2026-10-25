@@ -366,6 +366,21 @@ def leave_request_edit(request, pk):
                     locked.start_date = updated.start_date
                     locked.end_date = updated.end_date
                     locked.save(update_fields=['leave_type', 'start_date', 'end_date'])
+
+                    # Keep existing manager notifications in sync with edited dates.
+                    Notification.objects.filter(
+                        notification_type='LEAVE',
+                        related_entity='LeaveRequest',
+                        related_entity_id=locked.request_id,
+                        title='New Leave Request Requires Approval',
+                    ).update(
+                        message=(
+                            f'{locked.employee} has submitted a '
+                            f'leave request from {locked.start_date} to '
+                            f'{locked.end_date}. Please review the request.'
+                        )
+                    )
+
                     create_audit_log(
                         user=request.user,
                         action='UPDATE',
@@ -405,6 +420,15 @@ def leave_request_delete(request, pk):
             raise PermissionDenied('Only pending leave requests can be deleted.')
 
         request_id = leave_request.pk
+
+        # Remove obsolete manager approval notifications for this request.
+        Notification.objects.filter(
+            notification_type='LEAVE',
+            related_entity='LeaveRequest',
+            related_entity_id=leave_request.request_id,
+            title='New Leave Request Requires Approval',
+        ).delete()
+
         leave_request.delete()
         create_audit_log(
             user=request.user,

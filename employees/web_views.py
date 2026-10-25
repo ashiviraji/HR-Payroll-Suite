@@ -1,4 +1,5 @@
 
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.db import transaction
@@ -154,6 +155,17 @@ def employee_create(request):
                     entity_id=employee.pk,
                 )
 
+            # -----------------------------------------
+            # SUCCESS MESSAGE
+            # -----------------------------------------
+
+            messages.success(
+                request,
+                f'Employee {employee.first_name} '
+                f'{employee.last_name} '
+                f'(ID: {employee.pk}) created successfully.'
+            )
+
             return redirect(
                 'employee_detail',
                 pk=employee.pk
@@ -254,6 +266,17 @@ def employee_update(request, pk):
                     entity_id=employee.pk,
                 )
 
+            # -----------------------------------------
+            # SUCCESS MESSAGE
+            # -----------------------------------------
+
+            messages.success(
+                request,
+                f'Employee {employee.first_name} '
+                f'{employee.last_name} '
+                f'(ID: {employee.pk}) updated successfully.'
+            )
+
             return redirect(
                 'employee_detail',
                 pk=employee.pk
@@ -335,6 +358,17 @@ def employee_deactivate(request, pk):
                 entity_name='Employee',
                 entity_id=employee.pk,
             )
+
+        # -----------------------------------------
+        # SUCCESS MESSAGE
+        # -----------------------------------------
+
+        messages.success(
+            request,
+            f'Employee {employee.first_name} '
+            f'{employee.last_name} '
+            f'(ID: {employee.pk}) deactivated successfully.'
+        )
 
         return redirect(
             'employee_list'

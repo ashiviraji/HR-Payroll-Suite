@@ -1,0 +1,153 @@
+
+{% extends 'base.html' %}
+
+{% block title %}
+{{ page_title }} | HR Payroll System
+{% endblock %}
+
+{% block content %}
+
+<div class="container py-3">
+
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+            <h2 class="fw-bold mb-1">
+                {{ page_title }}
+            </h2>
+
+            <p class="text-muted mb-0">
+                Enter employee salary details.
+            </p>
+        </div>
+
+        <a href="{% url 'salary_record_list' %}"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Back to Salary Management
+        </a>
+
+    </div>
+
+    <!-- Salary Form -->
+    <div class="card shadow-sm border-0">
+
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">
+                <i class="bi bi-cash-stack text-primary me-2"></i>
+                Employee Salary Information
+            </h5>
+        </div>
+
+        <div class="card-body p-4">
+
+            <form method="post">
+
+                {% csrf_token %}
+
+                <!-- General Validation Errors -->
+                {% if form.non_field_errors %}
+                    <div class="alert alert-danger">
+                        {{ form.non_field_errors }}
+                    </div>
+                {% endif %}
+
+                <div class="row g-4">
+
+                    <!-- Employee -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Employee *
+                        </label>
+
+                        {{ form.employee }}
+
+                        {% for error in form.employee.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Base Salary -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Base Salary *
+                        </label>
+
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            {{ form.base_salary }}
+                        </div>
+
+                        {% for error in form.base_salary.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Effective From -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Effective From *
+                        </label>
+
+                        {{ form.effective_from }}
+
+                        {% for error in form.effective_from.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Effective To -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Effective To
+                        </label>
+
+                        {{ form.effective_to }}
+
+                        <div class="form-text">
+                            Leave blank if the salary is ongoing.
+                        </div>
+
+                        {% for error in form.effective_to.errors %}
+                            <div class="text-danger small mt-1">
+                                {{ error }}
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-flex justify-content-end gap-2 mt-4 pt-3 border-top">
+
+                    <a href="{% url 'salary_record_list' %}"
+                       class="btn btn-outline-secondary">
+                        Cancel
+                    </a>
+
+                    <button type="submit"
+                            class="btn btn-primary">
+
+                        <i class="bi bi-check-circle me-1"></i>
+                        Save Salary
+
+                    </button>
+
+                </div>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
